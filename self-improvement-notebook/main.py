@@ -14,12 +14,23 @@ bot = telebot.TeleBot(API_TOKEN)
 
 database.init_db()
 
-def add():
-    pass
+def add(message):
     
+    sent = bot.send_message(message.chat.id, "Add a progress.")
+    bot.register_next_step_handler(sent,add_pro)
 
+def add_pro(message):
+    progress = message.text
+    user_id = message.from_user.id
+    database.add_progress(user_id=user_id, progress=progress)
+    bot.send_message(message.chat.id, "✅ Saved.")
+    
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+    database.insert_user(user_id=user_id, user_name=user_name)
+
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     add_btn = types.KeyboardButton('Add')
     list_btn = types.KeyboardButton('List')
@@ -27,13 +38,18 @@ def send_welcome(message):
     keyboard.add(add_btn,list_btn,stats_btn)
 
     bot.send_message(message.chat.id,
-        "Welcome to Grow Track bot.", reply_markup=keyboard)
+        f"Welcome to Grow Track bot *{user_name}* .", reply_markup=keyboard)
 
-@bot.message_handler(func= lambda message:True)
-def handler(message):
-    if message.text == 'Add' or 'add' or 'ADD':
-        add()
-    else:
-        bot.send_message(message.chat.id, ":/")
+@bot.message_handler(func= lambda message: message.text in ["Add", "List", "Stats"])
+def buttons_handler(message):
+    if message.text == 'Add':
+        add(message)
+        
+    # elif message.text == 'List':
+        
+    # else:
+@bot.message_handler(func=lambda message: True)
+def unknown(message):
+    bot.send_message(message.chat.id, ":/")
 
 bot.infinity_polling()
