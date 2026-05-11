@@ -45,9 +45,31 @@ def buttons_handler(message):
     if message.text == 'Add':
         add(message)
         
-    # elif message.text == 'List':
+    elif message.text == 'List':
+        progresses =database.get_list(user_id=message.from_user.id)
+
+        if not progresses:
+            bot.send_message(message.chat.id, "No progress found.")
+        else:
+            lines = []
+            for name, datetime in progresses:
+                date, time = datetime.split()
+                lines.append(f"• {name} — {date} at {time}")
+
+            final_message = "📋 Your list :\n\n" + "\n".join(lines)
+            bot.send_message(message.chat.id,final_message)
         
-    # else:
+    else:
+        stats = database.get_stats(user_id=message.from_user.id)
+
+        if not stats:
+            bot.send_message(message.chat.id, "No progress found.")
+
+        else:
+            bot.send_message(message.chat.id,f"You have {stats} progresses. ✌️")
+        
+
+    
 @bot.message_handler(func=lambda message: True)
 def unknown(message):
     bot.send_message(message.chat.id, ":/")
