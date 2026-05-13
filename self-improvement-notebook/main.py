@@ -72,6 +72,6 @@ def buttons_handler(message):
     
 @bot.message_handler(func=lambda message: True)
 def unknown(message):
-    bot.send_message(message.chat.id, ":/")
+    bot.send_message(message.chat.id, "😐")
 
 bot.infinity_polling()
