@@ -1,3 +1,4 @@
 # Internet access in Iran is restricted; therefore, a local PyPI mirror is used.
 --index-url https://mirror2.chabokan.net/pypi/simple/ # 
 pyTelegramBotAPI == 4.33.0
+beautifulsoup4 == 4.13.4

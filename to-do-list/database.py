@@ -78,7 +78,7 @@ def get_list(user_id):
 
 def get_stats(user_id):
     conn,cursor = connect_to_db()
-    cursor.execute("SELECT COUNT(*) FROM tasks WHERE user_id = ? ",(user_id,))
+    cursor.execute("SELECT COUNT(*) FROM tasks WHERE user_id = ? AND status = ? ",(user_id,0))
     count_all = cursor.fetchone()[0]
     conn.close()
     return count_all
@@ -89,8 +89,14 @@ def update_task_status(task_id,user_id):
     conn.commit()
     conn.close()
     
-def del_task(task_id):
+def del_task(task_id, user_id):
     conn,cursor = connect_to_db()
-    cursor.execute("DELETE FROM tasks WHERE id = ?",(task_id,))
+    cursor.execute("DELETE FROM tasks WHERE id = ? AND user_id = ?",(task_id,user_id))
+    conn.commit()
+    conn.close()
+
+def del_all_tasks(user_id):
+    conn,cursor = connect_to_db()
+    cursor.execute("DELETE FROM tasks WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
