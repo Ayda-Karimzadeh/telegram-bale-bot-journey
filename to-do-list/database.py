@@ -27,8 +27,6 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users(user_id)
     )
     """)
-    
-    
     conn.commit()
     conn.close()
 
@@ -100,3 +98,10 @@ def del_all_tasks(user_id):
     cursor.execute("DELETE FROM tasks WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
+
+def count_tasks(user_id):
+    conn,cursor = connect_to_db()
+    cursor.execute("SELECT COUNT(*) FROM tasks WHERE user_id = ?",(user_id,))
+    count_tasks = cursor.fetchone()[0]
+    conn.close()
+    return count_tasks

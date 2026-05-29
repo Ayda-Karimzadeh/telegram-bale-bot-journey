@@ -21,11 +21,11 @@ def main_menu():
     add_btn = types.KeyboardButton('Add Task')
     stats_btn = types.KeyboardButton('Stats')
     del_btn = types.KeyboardButton('Delete')
-    list_btn = types.KeyboardButton('List Tasks')
+    list_btn = types.KeyboardButton('Tasks List')
     keyboard.add(add_btn,stats_btn,del_btn,list_btn)
     return keyboard
 
-# todo list inline buttons
+# to do list inline buttons
 def create_task_markup(user_id):
     tasks = database.get_list(user_id)
     markup = types.InlineKeyboardMarkup()
@@ -104,12 +104,19 @@ def handle_messages(message):
     user_id = message.from_user.id
     user_state = database.get_user_state(user_id)
     if message.text == "Add Task":
-        database.update_user_state(user_id,"adding task")
-        bot.send_message(message.chat.id,
-                            "Add tasks. when you are done click *Tasks added*.",
-                            reply_markup=add_menu(),
-                            parse_mode="Markdown")
-        return
+        num_tasks = database.count_tasks(user_id)
+        if num_tasks < 10 :
+            database.update_user_state(user_id,"adding task")
+            bot.send_message(message.chat.id,
+                                "Add tasks. when you are done click *Tasks added*.",
+                                reply_markup=add_menu(),
+                                parse_mode="Markdown")
+            return
+        else:
+            database.update_user_state(user_id,"none")
+            bot.send_message(message.chat.id,"Sorry you get on the limitation , you only can have 10 tasks \n" \
+                                            "in your to do list", reply_markup=main_menu())
+
     elif user_state == "adding task":
         if message.text == "Tasks added":
             database.update_user_state(user_id,"none")
@@ -120,10 +127,16 @@ def handle_messages(message):
             bot.send_message(message.chat.id, "Back to main menu.", reply_markup=main_menu())
 
         else:
-            database.add_task(user_id=user_id, task=message.text)
+            num_tasks = database.count_tasks(user_id)
+            if num_tasks < 10:
+                database.add_task(user_id=user_id, task=message.text)
+            else:
+                database.update_user_state(user_id, "none")
+                bot.send_message(message.chat.id,"Sorry, limit is 10 tasks. Previous tasks saved, but the last one was not saved.",
+                                reply_markup=main_menu())
             return
 
-    elif message.text == "List Tasks":
+    elif message.text == "Tasks List":
         database.update_user_state(user_id,"to do list")
         tasks = database.get_list(user_id=user_id)
         if not tasks:
@@ -157,7 +170,7 @@ def handle_messages(message):
             bot.send_message(message.chat.id, "Your list is empty.", reply_markup=keyboard)
         else:
             # ۳. ارسال تنها یک پیام که هم شامل توضیح است و هم دکمه‌های این‌لاین
-            bot.send_message(message.chat.id, "Tap a task to delete a task:", reply_markup=keyboard)
+            bot.send_message(message.chat.id, "Tap a task to delete a task.", reply_markup=keyboard)
             bot.send_message(message.chat.id, "Your list:", reply_markup=del_tasks_inkey(user_id))
 
 
@@ -180,8 +193,5 @@ def handle_messages(message):
     
     else:
         bot.send_message(message.chat.id, "🤔")
-
-# ijad limit ezafe kardan tasks
-
 
 bot.infinity_polling()
