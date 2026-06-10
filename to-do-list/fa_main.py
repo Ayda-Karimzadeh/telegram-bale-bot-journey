@@ -18,10 +18,10 @@ database.init_db()
 # main menu keyboard
 def main_menu():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
-    add_btn = types.KeyboardButton('Add Task')
-    stats_btn = types.KeyboardButton('Stats')
-    del_btn = types.KeyboardButton('Delete')
-    list_btn = types.KeyboardButton('Tasks List')
+    add_btn = types.KeyboardButton('افزودن کار')
+    stats_btn = types.KeyboardButton('آمار')
+    del_btn = types.KeyboardButton('حذف کردن')
+    list_btn = types.KeyboardButton('لیست کارها')
     keyboard.add(add_btn,stats_btn,del_btn,list_btn)
     return keyboard
 
@@ -47,8 +47,8 @@ def del_tasks_inkey(user_id):
 # add menu keyboard
 def add_menu():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn_added = types.KeyboardButton("Tasks added")
-    btn_menu = types.KeyboardButton("Back")
+    btn_added = types.KeyboardButton("ثبت کارها")
+    btn_menu = types.KeyboardButton("بازگشت")
     keyboard.add(btn_added,btn_menu)
     return keyboard
 
@@ -60,8 +60,8 @@ def send_welcome(message):
     database.insert_user(user_id=user_id, user_name=user_name)
     #agar karbar jadid nabood pyam motefaveti neshan dahad
     bot.send_message(message.chat.id,
-        f"Welcome to To do list bot *{user_name}*.\n\n"
-        "Use the buttons below to add tasks, see your list, and view stats."
+        f"سلام به ربات لیست کارها خوش آمدی*{user_name}*.\n\n"
+        "از دکمه‌های زیر برای افزودن کار، مشاهده لیست و آمار استفاده کن."
         , reply_markup=main_menu(),parse_mode="Markdown")
     
 # callback query handler
@@ -79,7 +79,7 @@ def callback_handler(call):
         try :
             bot.edit_message_text(
                 chat_id = call.message.chat.id,message_id = call.message.message_id,
-                text = "📋 Your list :",reply_markup = markup
+                text = "📋 لیست شما :",reply_markup = markup
             )
         except Exception as e:
             logger.error(f"Error editing message: {e}")
@@ -90,10 +90,10 @@ def callback_handler(call):
         try:
             if not database.get_list(user_id):
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                      text="Your list is empty.")
+                                      text="لیست شما خالی است.")
             else:
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                      text="Your list:", reply_markup=markup)
+                                      text="لیست شما:", reply_markup=markup)
         except Exception as e:
             logger.error(f"Error editing message: {e}")
 
@@ -103,28 +103,29 @@ def callback_handler(call):
 def handle_messages(message):
     user_id = message.from_user.id
     user_state = database.get_user_state(user_id)
-    if message.text == "Add Task":
+    if message.text == "افزودن کار":
         num_tasks = database.count_tasks(user_id)
         if num_tasks < 10 :
             database.update_user_state(user_id,"adding task")
             bot.send_message(message.chat.id,
-                                "Add tasks. when you are done click *Tasks added*.",
+                                "کارهای خودت را وارد کن.\n"
+                                "وقتی تمام شد روی *ثبت کارها* بزن.",
                                 reply_markup=add_menu(),
                                 parse_mode="Markdown")
             return
         else:
             database.update_user_state(user_id,"none")
-            bot.send_message(message.chat.id,"Sorry you get on the limitation , you only can have 10 tasks \n" \
-                                            "in your to do list", reply_markup=main_menu())
+            bot.send_message(message.chat.id,"متأسفم، به محدودیت رسیدی.\n"
+                                            "شما فقط می‌توانید ۱۰ کار در لیست خود داشته باشید.", reply_markup=main_menu())
 
     elif user_state == "adding task":
-        if message.text == "Tasks added":
+        if message.text == "ثبت کارها":
             database.update_user_state(user_id,"none")
-            bot.send_message(message.chat.id, "All tasks saved.", reply_markup=main_menu())
+            bot.send_message(message.chat.id, "تمامی کارها ثبت شدند.", reply_markup=main_menu())
 
-        elif message.text == "Back":
+        elif message.text == "بازگشت":
             database.update_user_state(user_id,"none")
-            bot.send_message(message.chat.id, "Back to main menu.", reply_markup=main_menu())
+            bot.send_message(message.chat.id, "بازگشت به منوی اصلی.", reply_markup=main_menu())
 
         else:
             num_tasks = database.count_tasks(user_id)
@@ -132,64 +133,64 @@ def handle_messages(message):
                 database.add_task(user_id=user_id, task=message.text)
             else:
                 database.update_user_state(user_id, "none")
-                bot.send_message(message.chat.id,"Sorry, limit is 10 tasks. Previous tasks saved, but the last one was not saved.",
+                bot.send_message(message.chat.id,"متأسفم، محدودیت ۱۰ کار رعایت شود. کارهای قبلی ذخیره شدند، اما آخرین کار ذخیره نشد.",
                                 reply_markup=main_menu())
             return
 
-    elif message.text == "Tasks List":
+    elif message.text == "لیست کارها":
         database.update_user_state(user_id,"to do list")
         tasks = database.get_list(user_id=user_id)
         if not tasks:
-            bot.send_message(message.chat.id, "No task found.")
+            bot.send_message(message.chat.id, "لیست شما خالی است.")
         else:
             markup = create_task_markup(user_id)
-            bot.send_message(message.chat.id, "📋 Your list:", reply_markup=markup)
+            bot.send_message(message.chat.id, "📋 لیست شما:", reply_markup=markup)
         return
 
     # task hay anjam shode va nashode neshan dahad adad ya masalan nemoodar
-    elif message.text == "Stats":
+    elif message.text == "آمار":
         tasks = database.get_list(user_id)
         if not tasks:
-            bot.send_message(message.chat.id, "No task found.")
+            bot.send_message(message.chat.id, "لیست شما خالی است.")
         else:
             stats = database.get_stats(user_id=user_id)
-            bot.send_message(message.chat.id, f"You have {stats} tasks waiting to be done.")
+            bot.send_message(message.chat.id, f"شما {stats} کار انجام‌نشده دارید.")
         return
     
-    elif message.text == "Delete":
+    elif message.text == "حذف کردن":
         database.update_user_state(user_id, "deleting tasks")
         
         # ۱. ساخت کیبورد متنی برای گزینه‌های کلی
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        del_mylist_btn = types.KeyboardButton('Del my to do list')
-        back_btn = types.KeyboardButton('Back')
+        del_mylist_btn = types.KeyboardButton('حذف کل لیست')
+        back_btn = types.KeyboardButton('بازگشت')
         keyboard.add(del_mylist_btn, back_btn)
         
         # ۲. گرفتن لیست تسک‌ها و ساخت مارک‌آپ این‌لاین
         tasks = database.get_list(user_id)
         if not tasks:
-            bot.send_message(message.chat.id, "Your list is empty.", reply_markup=keyboard)
+            bot.send_message(message.chat.id, "لیست شما خالی است.", reply_markup=keyboard)
         else:
             # ۳. ارسال تنها یک پیام که هم شامل توضیح است و هم دکمه‌های این‌لاین
-            bot.send_message(message.chat.id, "Tap a task to delete a task.", reply_markup=keyboard)
-            bot.send_message(message.chat.id, "Your list:", reply_markup=del_tasks_inkey(user_id))
+            bot.send_message(message.chat.id, "برای حذف کار روی آن کلیک کن.", reply_markup=keyboard)
+            bot.send_message(message.chat.id, "لیست شما:", reply_markup=del_tasks_inkey(user_id))
 
 
     elif user_state == "deleting tasks":
         
-        if message.text == "Del my to do list":
+        if message.text == "حذف کل لیست":
             database.del_all_tasks(user_id)
             database.update_user_state(user_id, "none")
-            bot.send_message(message.chat.id,"Your to do list deleted!", reply_markup=main_menu())
+            bot.send_message(message.chat.id,"لیست کارهای شما با موفقیت حذف شد!", reply_markup=main_menu())
 
-        elif message.text == "Back":
+        elif message.text == "بازگشت":
             database.update_user_state(user_id,"none")
-            bot.send_message(message.chat.id, "Back to main menu.", reply_markup=main_menu())
+            bot.send_message(message.chat.id, "بازگشت به منوی اصلی.", reply_markup=main_menu())
             return
 
-    elif message.text == "Back":
+    elif message.text == "بازگشت":
         database.update_user_state(user_id,"none")
-        bot.send_message(message.chat.id, "Back to main menu.", reply_markup=main_menu())
+        bot.send_message(message.chat.id, "بازگشت به منوی اصلی.", reply_markup=main_menu())
         return
     
     else:
