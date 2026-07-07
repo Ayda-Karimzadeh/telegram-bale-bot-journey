@@ -159,18 +159,15 @@ def handle_messages(message):
     elif message.text == "Delete":
         database.update_user_state(user_id, "deleting tasks")
         
-        # ۱. ساخت کیبورد متنی برای گزینه‌های کلی
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         del_mylist_btn = types.KeyboardButton('Del my to do list')
         back_btn = types.KeyboardButton('Back')
         keyboard.add(del_mylist_btn, back_btn)
         
-        # ۲. گرفتن لیست تسک‌ها و ساخت مارک‌آپ این‌لاین
         tasks = database.get_list(user_id)
         if not tasks:
             bot.send_message(message.chat.id, "Your list is empty.", reply_markup=keyboard)
         else:
-            # ۳. ارسال تنها یک پیام که هم شامل توضیح است و هم دکمه‌های این‌لاین
             bot.send_message(message.chat.id, "Tap a task to delete a task.", reply_markup=keyboard)
             bot.send_message(message.chat.id, "Your list:", reply_markup=del_tasks_inkey(user_id))
 
